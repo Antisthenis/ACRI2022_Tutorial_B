@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Belousov–Zhabotinsky10</title>
+</head>
+  <script src="ca.js"></script>
+<body>
+  
+  <input type="file" id="myFile">Load image</input>
+	<br>
+	<img id="myImage" style="border:1px" />
+	<br>
+ <button onclick="simulation()">Run simulation</button> 
+	<br>
+<canvas id="canvas" ></canvas>	
+   
+  <script type="text/javascript">
+    "use strict";
+	const canvas1 = document.createElement("canvas");
+	canvas1.width  = 1000;
+	canvas1.height = 1000;
+	var ctx = canvas1.getContext("2d");
+	var imageData;
+	document.getElementById('myFile').onchange = function (evt) {
+    var tgt = evt.target || window.event.srcElement,
+        files = tgt.files;
+
+    // FileReader support
+    if (FileReader && files && files.length) {
+        var fr = new FileReader();
+        fr.onload = () => showImage(fr);
+        fr.readAsDataURL(files[0]);
+    }
+	
+	}
+
+	function showImage(fileReader) {
+    const img = document.getElementById("myImage");
+    img.src = fileReader.result;
+	img.onload = () => getImageData(img);
+	}
+
+	function getImageData(img) {
+    ctx.drawImage(img, 0, 0);
+    imageData = ctx.getImageData(0, 0, img.width, img.height).data;
+    console.log("image data:", imageData);
+	console.log("image length:", imageData.length);
+	console.log("width data:", img.width);
+	console.log("height data:", img.height);
+	canvas1.width  = img.width;
+	canvas1.height = img.height;
+	}
+	
+	function simulation () {
+
+	const canvas1Width = canvas1.width; 
+
+	const getColorIndicesForCoord = (x, y, width) => {
+		const red = y * (width * 4) + x * 4;
+		return red; 
+	};
+
+	
+	const canvas = document.getElementById("canvas");
+	canvas.width  = canvas1.width;
+	canvas.height = canvas1.height;
+	
+    const context = canvas.getContext("2d");
+
+    const NEUTRAL = 0;
+    const EXCITED = 1;
+    const REFREACTORY = 2;
+	const WALL = -1;
+    
+    function init(x,y) {
+	var tempValue = imageData[getColorIndicesForCoord(x, y, canvas1Width)]; 
+	if ( tempValue > 100 && tempValue < 220 ) {
+		return WALL;
+	}
+	if (( x > 16 && x < 18 && y > 57 && y < 68  ) ||  // Always HIGH input "1"
+		( x > 16 && x < 18 && y > 98 && y < 109  ) ||  // Input "x"
+		( x > 16 && x < 18 && y > 180 && y < 191  ) || // Input "y"
+		( x > 16 && x < 18 && y > 135 && y < 146  )){  // Input "z"
+		    return EXCITED;
+		} else {
+		    return NEUTRAL;
+		}
+	}
+    
+
+    function Belousov(  ) {
+	
+	return function( x, y, c ) {
+	
+		if( c[x][y] === WALL ) {
+		return WALL;
+		}
+	    
+		if( c[x][y] === NEUTRAL ) {
+		if( c[x-1][y] + c[x+1][y] + c[x][y-1] + c[x][y+1] +
+			c[x-2][y] + c[x+2][y] + c[x][y-2] + c[x][y+2]+
+			c[x-1][y+1] + c[x-1][y-1] + c[x+1][y-1] + c[x+1][y+1] +
+			c[x-2][y+1] + c[x-2][y-1] + c[x-2][y-2] + c[x-2][y+2]+
+			c[x+2][y+1] + c[x+2][y-1] + c[x+2][y-2] + c[x+2][y+2]+
+			c[x-1][y+2] + c[x-1][y-2] + c[x+1][y-2] + c[x+1][y+2] > 1 ){
+		    return EXCITED;
+		} else {
+		return NEUTRAL;
+	    }
+		}
+		
+	    if( c[x][y] === EXCITED ) {
+		return REFREACTORY;
+	    }
+		
+	    if( c[x][y] === REFREACTORY ) {
+		return REFREACTORY;
+		}
+		
+	}
+    }
+    
+    function color(state) {
+        if( state === NEUTRAL )
+            return "white";
+	if( state === EXCITED )
+	    return "red";
+	if( state === REFREACTORY )
+	    return "gray";
+	if( state === WALL )
+	    return "black";
+    }
+
+    console.log("INIT");
+    const width = canvas1.width;
+    const height = canvas1.height;
+    let cells = setup( width, height, init );
+
+    console.log("RUN");
+    const delay = 1; //In millisec.
+    const iter = 250;
+    start( context, cells, Belousov(), color, iter, delay );
+
+    console.log("DONE");
+	}
+  </script>
+</body>
+</html>
+
+
+
