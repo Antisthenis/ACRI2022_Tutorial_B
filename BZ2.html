@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Belousov–Zhabotinsky2</title>
+</head>
+  <script src="ca.js"></script>
+<body>
+
+  <canvas id="canvas" width="500" height="500"></canvas>
+   
+  <script type="text/javascript">
+    "use strict";
+
+    const canvas = document.getElementById("canvas");
+
+    const context = canvas.getContext("2d");
+    context.scale(2,2);
+
+    const NEUTRAL = 0;
+    const EXCITED = 1;
+    const REFREACTORY = 2;
+	const WALL = -1;
+    
+    function init(x,y) {
+	if( Math.random() <= 0.99 ) {
+		    return NEUTRAL;
+		} else {
+		    return EXCITED;
+		}
+	}
+    
+
+    function Belousov(  ) {
+	
+	return function( x, y, c ) {
+	
+		if( c[x][y] === WALL ) {
+		return WALL;
+		}
+	    
+		if( c[x][y] === NEUTRAL ) {
+		if( c[x-1][y] + c[x+1][y] + c[x][y-1] + c[x][y+1]+
+			c[x-1][y+1] + c[x-1][y-1] + c[x+1][y-1] + c[x+1][y+1] > 2 ){
+		    return EXCITED;
+		} else {
+		return NEUTRAL;
+	    }
+		}
+		
+	    if( c[x][y] === EXCITED ) {
+		return REFREACTORY;
+	    }
+		
+	    if( c[x][y] === REFREACTORY ) {
+		return REFREACTORY;
+		}
+		
+	}
+    }
+    
+    function color(state) {
+        if( state === NEUTRAL )
+            return "white";
+	if( state === EXCITED )
+	    return "red";
+	if( state === REFREACTORY )
+	    return "gray";
+    }
+
+    console.log("INIT");
+    const width = 500;
+    const height = 500;
+    let cells = setup( width, height, init );
+
+    console.log("RUN");
+    const delay = 0; //In millisec.
+    const iter = 1000;
+    start( context, cells, Belousov(), color, iter, delay );
+
+    console.log("DONE");
+
+  </script>
+</body>
+</html>
+
+
+
